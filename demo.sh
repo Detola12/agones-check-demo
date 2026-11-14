@@ -21,7 +21,8 @@ status() {
   echo
   echo "== Autoscaler events"
   kubectl -n "$NS" get events --field-selector involvedObject.name=arena-rooms \
-    -o custom-columns='REASON:.reason,MESSAGE:.message' 2>/dev/null | cut -c1-160 | uniq | tail -4
+    -o custom-columns='REASON:.reason,MESSAGE:.message' 2>/dev/null |
+    sed -E 's#agones.dev/agones/pkg/fleetautoscalers: ##' | cut -c1-200 | uniq | tail -4
 }
 
 case "${1:-status}" in
@@ -31,8 +32,11 @@ reset)
   kubectl -n "$NS" delete events --field-selector involvedObject.name=arena-rooms >/dev/null 2>&1 || true
   ;;
 apply)
-  echo "\$ kubectl apply -f deploy/agones/ ($(git branch --show-current 2>/dev/null || echo '?'))"
-  kubectl apply -f deploy/agones/
+  echo "branch: $(git branch --show-current 2>/dev/null || echo '?')"
+  # Fleet first, so the autoscaler never sees a Fleet without servers.
+  kubectl apply -f deploy/agones/fleet.yaml
+  kubectl -n "$NS" wait fleet/arena --for=jsonpath='{.status.readyReplicas}'=1 --timeout=120s >/dev/null
+  kubectl apply -f deploy/agones/autoscaler.yaml
   echo "waiting 30s for the autoscaler..."
   sleep 30
   status
