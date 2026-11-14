@@ -1,0 +1,29 @@
+# Arena game servers. Each server hosts up to 4 rooms, tracked with the
+# "rooms" Counter.
+apiVersion: agones.dev/v1
+kind: Fleet
+metadata:
+  name: arena
+  namespace: default
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        game: arena
+    spec:
+      ports:
+        - name: default
+          containerPort: 7654
+      counters:
+        rooms:
+          count: 0
+          capacity: 4
+      template:
+        spec:
+          containers:
+            - name: simple-game-server
+              image: us-docker.pkg.dev/agones-images/examples/simple-game-server:0.44
+              resources:
+                requests: {memory: 32Mi, cpu: 20m}
+                limits: {memory: 64Mi, cpu: 100m}

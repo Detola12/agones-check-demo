@@ -1,0 +1,15 @@
+name: agones-check
+on:
+  pull_request:
+    paths: ["deploy/agones/**"]
+  push:
+    branches: [main]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Rohan-Muslekar/agones-check@main
+        with:
+          paths: deploy/agones
+          environments: prod,dev

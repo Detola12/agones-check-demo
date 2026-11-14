@@ -1,0 +1,15 @@
+# Keep at least 8 free rooms (2 servers), scale up to 40 rooms.
+apiVersion: autoscaling.agones.dev/v1
+kind: FleetAutoscaler
+metadata:
+  name: arena-rooms
+  namespace: default
+spec:
+  fleetName: arena
+  policy:
+    type: Counter
+    counter:
+      key: rooms
+      bufferSize: 8
+      minCapacity: 8
+      maxCapacity: 40
